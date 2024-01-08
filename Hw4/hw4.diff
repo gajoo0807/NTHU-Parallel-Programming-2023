@@ -1,0 +1,229 @@
+[1mdiff --git a/.vscode/settings.json b/.vscode/settings.json[m
+[1mnew file mode 100644[m
+[1mindex 0000000..ff4ad4d[m
+[1m--- /dev/null[m
+[1m+++ b/.vscode/settings.json[m
+[36m@@ -0,0 +1,6 @@[m
+[32m+[m[32m{[m
+[32m+[m[32m    "files.associations": {[m
+[32m+[m[32m        "typeindex": "c",[m
+[32m+[m[32m        "typeinfo": "c"[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
+[1mdiff --git a/examples/ucp_hello_world.c b/examples/ucp_hello_world.c[m
+[1mindex d07dd47..9ed8b56 100644[m
+[1m--- a/examples/ucp_hello_world.c[m
+[1m+++ b/examples/ucp_hello_world.c[m
+[36m@@ -568,14 +568,14 @@[m [mint main(int argc, char **argv)[m
+     if (ucp_test_mode == TEST_MODE_WAIT || ucp_test_mode == TEST_MODE_EVENTFD) {[m
+         ucp_params.features |= UCP_FEATURE_WAKEUP;[m
+     }[m
+[31m-    ucp_params.request_size    = sizeof(struct ucx_context);[m
+[32m+[m[32m    ucp_params.request_size    = sizeof(struct ucx_context);[m[41m [m
+     ucp_params.request_init    = request_init;[m
+     ucp_params.name            = "hello_world";[m
+ [m
+     status = ucp_init(&ucp_params, config, &ucp_context);[m
+ [m
+     if (print_config) {[m
+[31m-        ucp_config_print(config, stdout, NULL, UCS_CONFIG_PRINT_CONFIG);[m
+[32m+[m[32m        ucp_config_print(config, stdout, NULL, UCS_CONFIG_PRINT_CONFIG);[m[41m [m
+     }[m
+ [m
+     ucp_config_release(config);[m
+[36m@@ -602,7 +602,7 @@[m [mint main(int argc, char **argv)[m
+         oob_sock = connect_common(client_target_name, server_port, ai_family);[m
+         CHKERR_JUMP(oob_sock < 0, "client_connect\n", err_addr);[m
+ [m
+[31m-        ret = recv(oob_sock, &peer_addr_len, sizeof(peer_addr_len), MSG_WAITALL);[m
+[32m+[m[32m        ret = recv(oob_sock, &peer_addr_len, sizeof(peer_addr_len), MSG_WAITALL);[m[41m [m
+         CHKERR_JUMP_RETVAL(ret != (int)sizeof(peer_addr_len),[m
+                            "receive address length\n", err_addr, ret);[m
+ [m
+[36m@@ -616,7 +616,7 @@[m [mint main(int argc, char **argv)[m
+         oob_sock = connect_common(NULL, server_port, ai_family);[m
+         CHKERR_JUMP(oob_sock < 0, "server_connect\n", err_peer_addr);[m
+ [m
+[31m-        ret = send(oob_sock, &local_addr_len, sizeof(local_addr_len), 0);[m
+[32m+[m[32m        ret = send(oob_sock, &local_addr_len, sizeof(local_addr_len), 0);[m[41m [m
+         CHKERR_JUMP_RETVAL(ret != (int)sizeof(local_addr_len),[m
+                            "send address length\n", err_peer_addr, ret);[m
+ [m
+[1mdiff --git a/src/ucp/core/ucp_context.c b/src/ucp/core/ucp_context.c[m
+[1mindex 304a3fa..57fc9d4 100644[m
+[1m--- a/src/ucp/core/ucp_context.c[m
+[1m+++ b/src/ucp/core/ucp_context.c[m
+[36m@@ -26,6 +26,7 @@[m
+ #include <string.h>[m
+ #include <dlfcn.h>[m
+ [m
+[32m+[m[32m#include<stdio.h>[m
+ [m
+ #define UCP_RSC_CONFIG_ALL    "all"[m
+ [m
+[1mdiff --git a/src/ucp/core/ucp_worker.c b/src/ucp/core/ucp_worker.c[m
+[1mindex 5adcee9..1bf1475 100644[m
+[1m--- a/src/ucp/core/ucp_worker.c[m
+[1m+++ b/src/ucp/core/ucp_worker.c[m
+[36m@@ -37,6 +37,7 @@[m
+ #include <sys/epoll.h>[m
+ #include <sys/timerfd.h>[m
+ #include <time.h>[m
+[32m+[m[32m#include <stdio.h>[m
+ [m
+ [m
+ #define UCP_WORKER_KEEPALIVE_ITER_SKIP 32[m
+[36m@@ -1852,6 +1853,7 @@[m [mucp_worker_print_used_tls(ucp_worker_h worker, ucp_worker_cfg_index_t cfg_index)[m
+ [m
+     ucs_string_buffer_rtrim(&strb, "; ");[m
+ [m
+[32m+[m[32m    printf("%s\n", ucs_string_buffer_cstr(&strb));[m
+     ucs_info("%s", ucs_string_buffer_cstr(&strb));[m
+ }[m
+ [m
+[36m@@ -2043,6 +2045,8 @@[m [mucs_status_t ucp_worker_get_ep_config(ucp_worker_h worker,[m
+     unsigned tag_proto_flags;[m
+     ucs_status_t status;[m
+ [m
+[32m+[m[32m    ucp_config_t *config;[m
+[32m+[m
+     ucs_assertv_always(key->num_lanes > 0,[m
+                        "empty endpoint configurations are not allowed");[m
+ [m
+[36m@@ -2101,6 +2105,8 @@[m [mucs_status_t ucp_worker_get_ep_config(ucp_worker_h worker,[m
+                                         UCP_PROTO_FLAG_AM_SHORT, key->am_lane,[m
+                                         &ep_config->am_u.max_eager_short);[m
+     } else {[m
+[32m+[m[32m        status = ucp_config_read(NULL, NULL, &config); //read 近config裡面[m
+[32m+[m[32m        ucp_config_print(config, stdout, NULL, UCS_CONFIG_PRINT_TLS);[m
+         ucp_worker_print_used_tls(worker, ep_cfg_index);[m
+     }[m
+ [m
+[36m@@ -2316,12 +2322,14 @@[m [mucs_status_t ucp_worker_create(ucp_context_h context,[m
+     unsigned name_length;[m
+     ucp_worker_h worker;[m
+     ucs_status_t status;[m
+[32m+[m[32m    // ucp_config_t *config;[m
+ [m
+     worker = ucs_calloc(1, sizeof(*worker), "ucp worker");[m
+     if (worker == NULL) {[m
+         return UCS_ERR_NO_MEMORY;[m
+     }[m
+ [m
+[32m+[m
+     worker->context              = context;[m
+     worker->uuid                 = ucs_generate_uuid((uintptr_t)worker);[m
+     worker->flush_ops_count      = 0;[m
+[1mdiff --git a/src/ucs/config/parser.c b/src/ucs/config/parser.c[m
+[1mindex 82bc04b..fda857a 100644[m
+[1m--- a/src/ucs/config/parser.c[m
+[1m+++ b/src/ucs/config/parser.c[m
+[36m@@ -26,6 +26,7 @@[m
+ #include <ctype.h>[m
+ #include <libgen.h>[m
+ [m
+[32m+[m[32m#include <stdio.h>[m
+ [m
+ /* width of titles in docstring */[m
+ #define UCS_CONFIG_PARSER_DOCSTR_WIDTH         10[m
+[36m@@ -1850,6 +1851,38 @@[m [mucs_config_parser_print_opts_recurs(FILE *stream, const void *opts,[m
+     }[m
+ }[m
+ [m
+[32m+[m
+[32m+[m[32mvoid config_hw4_print_vars(const char *prefix){[m
+[32m+[m[32m    char **envp, *envstr;[m
+[32m+[m[32m    size_t prefix_len;[m
+[32m+[m[32m    char *var_name;[m
+[32m+[m[32m    khiter_t iter;[m
+[32m+[m[32m    char *saveptr;[m
+[32m+[m[32m    prefix_len      = strlen(prefix);[m
+[32m+[m[32m    pthread_mutex_lock(&ucs_config_parser_env_vars_hash_lock);[m
+[32m+[m[32m    for (envp = environ; *envp != NULL; ++envp) {[m
+[32m+[m[32m        envstr = ucs_strdup(*envp, "env_str");[m
+[32m+[m[32m        if (envstr == NULL) {[m
+[32m+[m[32m            continue;[m
+[32m+[m[32m        }[m
+[32m+[m[32m        var_name = strtok_r(envstr, "=", &saveptr);[m
+[32m+[m[32m        if (!var_name || strncmp(var_name, prefix, prefix_len)) {[m
+[32m+[m[32m            ucs_free(envstr);[m
+[32m+[m[32m            continue; /* Not UCX */[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        iter = kh_get(ucs_config_env_vars, &ucs_config_parser_env_vars, var_name);[m
+[32m+[m[32m        if (iter == kh_end(&ucs_config_parser_env_vars)) {[m
+[32m+[m[32m            if (ucs_global_opts.warn_unused_env_vars) {[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                printf("%s \n", *envp);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m        ucs_free(envstr);[m
+[32m+[m[32m    }[m
+[32m+[m[32m    pthread_mutex_unlock(&ucs_config_parser_env_vars_hash_lock);[m
+[32m+[m[32m}[m
+[32m+[m
+ void ucs_config_parser_print_opts(FILE *stream, const char *title, const void *opts,[m
+                                   ucs_config_field_t *fields, const char *table_prefix,[m
+                                   const char *prefix, ucs_config_print_flags_t flags)[m
+[36m@@ -1878,9 +1911,9 @@[m [mvoid ucs_config_parser_print_opts(FILE *stream, const char *title, const void *o[m
+     }[m
+ [m
+     // TODO: PP-HW4[m
+[31m-    if (flags /*& UCS_CONFIG_PRINT_TLS*/) {[m
+[31m-[m
+[31m-    }[m
+[32m+[m[32m    if (flags & UCS_CONFIG_PRINT_TLS) {[m
+[32m+[m[32m        config_hw4_print_vars("UCX_TLS");[m
+[32m+[m[32m    }[m[41m [m
+ [m
+     if (flags & UCS_CONFIG_PRINT_HEADER) {[m
+         fprintf(stream, "\n");[m
+[36m@@ -1981,6 +2014,8 @@[m [mstatic void ucs_config_parser_append_similar_vars_message([m
+     ucs_string_buffer_cleanup(&matches_buffer);[m
+ }[m
+ [m
+[32m+[m
+[32m+[m
+ static void ucs_config_parser_print_env_vars(const char *prefix)[m
+ {[m
+     int num_unused_vars, num_used_vars;[m
+[36m@@ -2010,7 +2045,6 @@[m [mstatic void ucs_config_parser_print_env_vars(const char *prefix)[m
+         if (envstr == NULL) {[m
+             continue;[m
+         }[m
+[31m-[m
+         var_name = strtok_r(envstr, "=", &saveptr);[m
+         if (!var_name || strncmp(var_name, prefix, prefix_len)) {[m
+             ucs_free(envstr);[m
+[36m@@ -2047,6 +2081,7 @@[m [mstatic void ucs_config_parser_print_env_vars(const char *prefix)[m
+ [m
+     if (num_used_vars > 0) {[m
+         ucs_string_buffer_rtrim(&used_vars_strb, " ");[m
+[32m+[m[41m        [m
+         ucs_info("%s* env variable%s: %s", prefix,[m
+                  (num_used_vars > 1) ? "s" : "",[m
+                  ucs_string_buffer_cstr(&used_vars_strb));[m
+[36m@@ -2065,7 +2100,7 @@[m [mvoid ucs_config_parser_print_env_vars_once(const char *env_prefix)[m
+     /* Although env_prefix is not real environment variable put it[m
+      * into table anyway to save prefixes which was already checked.[m
+      * Need to save both env_prefix and base_prefix */[m
+[31m-    ucs_config_parser_mark_env_var_used(env_prefix, &added);[m
+[32m+[m[32m    ucs_config_parser_mark_env_var_used(env_prefix, &added);[m[41m [m
+     if (!added) {[m
+         return;[m
+     }[m
+[1mdiff --git a/src/ucs/config/types.h b/src/ucs/config/types.h[m
+[1mindex c300a6b..9228e7f 100644[m
+[1m--- a/src/ucs/config/types.h[m
+[1m+++ b/src/ucs/config/types.h[m
+[36m@@ -90,7 +90,8 @@[m [mtypedef enum {[m
+     UCS_CONFIG_PRINT_HEADER          = UCS_BIT(1),[m
+     UCS_CONFIG_PRINT_DOC             = UCS_BIT(2),[m
+     UCS_CONFIG_PRINT_HIDDEN          = UCS_BIT(3),[m
+[31m-    UCS_CONFIG_PRINT_COMMENT_DEFAULT = UCS_BIT(4)[m
+[32m+[m[32m    UCS_CONFIG_PRINT_TLS             = UCS_BIT(4),[m
+[32m+[m[32m    UCS_CONFIG_PRINT_COMMENT_DEFAULT = UCS_BIT(5)[m
+ } ucs_config_print_flags_t;[m
+ [m
+ [m
